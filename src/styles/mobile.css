@@ -1,82 +1,182 @@
-/* Mobile-specific styles and improvements */
+/* Mobile-first responsive design */
 
-/* Ensure proper viewport handling */
+/* Base mobile styles */
 @media (max-width: 768px) {
   /* Prevent horizontal scrolling */
-  body {
+  html, body {
     overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
   }
   
-  /* Improve touch targets */
+  /* iOS Safari viewport fix */
+  .min-h-screen {
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+  }
+  
+  /* Touch-friendly buttons */
   button {
     min-height: 44px;
     min-width: 44px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
   
-  /* Better spacing for mobile */
-  .space-y-4 > * + * {
-    margin-top: 0.75rem;
+  /* Better text rendering on mobile */
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
   
-  /* Improve text readability on mobile */
-  .text-sm {
-    font-size: 0.875rem;
-    line-height: 1.25rem;
+  /* Improve form inputs on mobile */
+  input, select, textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+    -webkit-appearance: none;
+    border-radius: 8px;
   }
   
-  /* Better modal handling on mobile */
+  /* Better modal handling */
   .fixed.inset-0 {
     position: fixed;
     top: 0;
     right: 0;
     bottom: 0;
     left: 0;
+    z-index: 9999;
   }
   
-  /* Improve video element on mobile */
+  /* Video element optimizations */
   video {
     width: 100%;
     height: auto;
-    max-height: 50vh;
+    max-width: 100%;
+    -webkit-playsinline: true;
+    playsinline: true;
+    object-fit: cover;
   }
   
-  /* Better button spacing on mobile */
-  .flex.space-x-2 > * + * {
+  /* Improve spacing on mobile */
+  .space-y-3 > * + * {
+    margin-top: 0.75rem;
+  }
+  
+  .space-x-2 > * + * {
     margin-left: 0.5rem;
   }
   
-  /* Improve card layouts on mobile */
+  /* Better card layouts */
   .rounded-lg {
-    border-radius: 0.5rem;
+    border-radius: 0.75rem;
   }
   
-  /* Better padding for mobile cards */
-  .p-3 {
-    padding: 0.75rem;
+  /* Optimize padding for mobile */
+  .p-4 {
+    padding: 1rem;
+  }
+  
+  .px-4 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .py-4 {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+  
+  /* Better shadow on mobile */
+  .shadow-sm {
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  }
+  
+  /* Improve text contrast */
+  .text-gray-600 {
+    color: #4b5563;
+  }
+  
+  .text-gray-700 {
+    color: #374151;
+  }
+  
+  .text-gray-900 {
+    color: #111827;
   }
 }
 
-/* iOS Safari specific fixes */
+/* iPhone specific fixes */
 @supports (-webkit-touch-callout: none) {
-  /* Fix viewport height issues on iOS */
+  /* Fix iOS Safari issues */
   .min-h-screen {
     min-height: -webkit-fill-available;
   }
   
-  /* Improve video playback on iOS */
+  /* Better video handling on iOS */
   video {
     -webkit-playsinline: true;
     playsinline: true;
   }
+  
+  /* Fix iOS button styling */
+  button {
+    -webkit-appearance: none;
+    border-radius: 8px;
+  }
+  
+  /* Prevent iOS zoom on inputs */
+  input[type="text"],
+  input[type="email"],
+  input[type="number"],
+  textarea,
+  select {
+    font-size: 16px;
+  }
 }
 
-/* Landscape orientation improvements */
+/* Landscape orientation on mobile */
 @media (max-width: 768px) and (orientation: landscape) {
   .max-h-[90vh] {
-    max-height: 80vh;
+    max-height: 85vh;
   }
   
   video {
-    max-height: 40vh;
+    max-height: 50vh;
+  }
+  
+  /* Adjust modal height in landscape */
+  .fixed .bg-white {
+    max-height: 85vh;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+  .text-xl {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+  }
+  
+  .text-lg {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+  
+  /* Smaller padding on very small screens */
+  .p-4 {
+    padding: 0.75rem;
+  }
+  
+  .px-4 {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* Ensure crisp rendering on retina displays */
+  * {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }

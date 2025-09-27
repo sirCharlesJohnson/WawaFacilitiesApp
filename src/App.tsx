@@ -18,6 +18,19 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// Register Service Worker for PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then((registration) => {
+        console.log('SW registered: ', registration);
+      })
+      .catch((registrationError) => {
+        console.log('SW registration failed: ', registrationError);
+      });
+  });
+}
+
 function App() {
   const [currentPage, setCurrentPage] = useState<'dashboard' | 'customer-loop' | 'daily-tasks' | 'photos'>('dashboard');
   const [globalPhotos, setGlobalPhotos] = useState<{ [key: string]: string }>({});

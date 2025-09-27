@@ -20,6 +20,7 @@ interface CustomerLoopProps {
 export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}, onTaskComplete, onLoopComplete, loopState, onLoopStateUpdate }: CustomerLoopProps) {
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [photos, setPhotos] = useState<{ [key: string]: string }>({});
+  const [showTimerSettings, setShowTimerSettings] = useState(false);
   const [showCamera, setShowCamera] = useState(false);
   const [currentPhotoTask, setCurrentPhotoTask] = useState<{ taskIndex: number; photoType: 'before' | 'after' } | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);

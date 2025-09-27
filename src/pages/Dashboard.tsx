@@ -2,14 +2,14 @@ import React from 'react';
 import { BarChart3, Users, CheckCircle, AlertTriangle, Clock, Camera, FileText, Settings, Shield, Package, AlertCircle, Image } from 'lucide-react';
 
 interface DashboardProps {
-  onNavigate: (page: 'customer-loop') => void;
+  onNavigate: (page: 'customer-loop' | 'daily-tasks') => void;
 }
 
 export default function Dashboard({ onNavigate }: DashboardProps) {
   const menuItems = [
     { icon: BarChart3, label: 'Dashboard', active: true },
     { icon: Clock, label: 'Customer Loop', onClick: () => onNavigate('customer-loop') },
-    { icon: CheckCircle, label: 'Daily Tasks' },
+    { icon: CheckCircle, label: 'Daily Tasks', onClick: () => onNavigate('daily-tasks') },
     { icon: FileText, label: 'Work Orders' },
     { icon: Settings, label: 'Equipment' },
     { icon: Shield, label: 'Safety' },

@@ -6,3 +6,4 @@
  
  function App() {
    const [currentPage, setCurrentPage] = useState<'dashboard' | 'customer-loop'>('dashboard');
+ }

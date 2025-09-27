@@ -172,14 +172,14 @@ export default function CustomerLoop({ onBack }: CustomerLoopProps) {
           console.log('Photo data URL length:', photoDataUrl.length);
           console.log('Current photos state before update:', photos);
           
-          setPhotos(prev => ({
+          setPhotos(prev => {
             const newPhotos = {
               ...prev,
               [photoKey]: photoDataUrl
             };
             console.log('Updated photos state:', newPhotos);
             return newPhotos;
-          }));
+          });
           
           stopCamera();
         } else {

@@ -166,6 +166,10 @@ export default function CustomerLoop({ onBack }: CustomerLoopProps) {
           const photoDataUrl = canvas.toDataURL('image/jpeg', 0.8);
           const photoKey = `${currentPhotoTask.taskIndex}-${currentPhotoTask.photoType}`;
           
+          console.log('Photo captured:', `Photo_${Date.now()}.jpg`);
+          console.log('Photo key:', photoKey);
+          console.log('Photo data URL length:', photoDataUrl.length);
+          
           setPhotos(prev => ({
             ...prev,
             [photoKey]: photoDataUrl

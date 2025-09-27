@@ -168,16 +168,19 @@ export default function CustomerLoop({ onBack }: CustomerLoopProps) {
           
           const fileName = `Photo_${Date.now()}.jpg`;
           console.log('Photo captured:', fileName);
-          console.log('Photo key:', photoKey);
+          console.log('Setting photo with key:', photoKey);
           console.log('Photo data URL length:', photoDataUrl.length);
-          console.log('Current photos state before update:', photos);
+          console.log('Current photos state:', Object.keys(photos));
           
-          setPhotos(prev => {
-            const newPhotos = { ...prev, [photoKey]: photoDataUrl };
-            console.log('Updated photos state:', newPhotos);
-            console.log('Photo key being set:', photoKey);
-            console.log('Photo data exists:', !!photoDataUrl);
-            return newPhotos;
+          // Update photos state
+          setPhotos(prevPhotos => {
+            const updatedPhotos = {
+              ...prevPhotos,
+              [photoKey]: photoDataUrl
+            };
+            console.log('Updated photos state keys:', Object.keys(updatedPhotos));
+            console.log('Photo stored for key:', photoKey, 'exists:', !!updatedPhotos[photoKey]);
+            return updatedPhotos;
           });
           
           stopCamera();
@@ -336,21 +339,20 @@ export default function CustomerLoop({ onBack }: CustomerLoopProps) {
                     
                     {photos[`${index}-before`] ? (
                       <div className="relative">
-                      <img
-                        src={photos[`${index}-before`]}
-                        alt="Before photo"
-                        className="w-full h-32 object-cover rounded-lg border mb-2"
+                        <img
+                          src={photos[`${index}-before`]}
+                          alt="Before photo"
+                          className="w-full h-32 object-cover rounded-lg border mb-2"
                           onError={(e) => {
                             console.error('Error loading before photo for task', index);
                             console.error('Photo key:', `${index}-before`);
                             console.error('Photo exists in state:', !!photos[`${index}-before`]);
-                            console.error('Photo data length:', photos[`${index}-before`]?.length);
+                            console.error('All photo keys:', Object.keys(photos));
                           }}
                           onLoad={() => {
                             console.log('Before photo loaded successfully for task', index);
-                            console.log('Photo key:', `${index}-before`);
                           }}
-                      />
+                        />
                         <button
                           onClick={() => handlePhotoCapture(index, 'before')}
                           className="absolute top-2 right-2 bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700"
@@ -385,21 +387,20 @@ export default function CustomerLoop({ onBack }: CustomerLoopProps) {
                     
                     {photos[`${index}-after`] ? (
                       <div className="relative">
-                      <img
-                        src={photos[`${index}-after`]}
-                        alt="After photo"
-                        className="w-full h-32 object-cover rounded-lg border mb-2"
+                        <img
+                          src={photos[`${index}-after`]}
+                          alt="After photo"
+                          className="w-full h-32 object-cover rounded-lg border mb-2"
                           onError={(e) => {
                             console.error('Error loading after photo for task', index);
                             console.error('Photo key:', `${index}-after`);
                             console.error('Photo exists in state:', !!photos[`${index}-after`]);
-                            console.error('Photo data length:', photos[`${index}-after`]?.length);
+                            console.error('All photo keys:', Object.keys(photos));
                           }}
                           onLoad={() => {
                             console.log('After photo loaded successfully for task', index);
-                            console.log('Photo key:', `${index}-after`);
                           }}
-                      />
+                        />
                         <button
                           onClick={() => handlePhotoCapture(index, 'after')}
                           className="absolute top-2 right-2 bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700"
@@ -450,6 +451,15 @@ export default function CustomerLoop({ onBack }: CustomerLoopProps) {
             </div>
           </div>
         )}
+        {/* Debug Info - Remove this after testing */}
+        <div className="mt-4 p-4 bg-gray-100 rounded-lg text-sm">
+          <h4 className="font-semibold mb-2">Debug Info:</h4>
+          <p>Total photos stored: {Object.keys(photos).length}</p>
+          <p>Photo keys: {Object.keys(photos).join(', ')}</p>
+          {Object.entries(photos).map(([key, value]) => (
+            <p key={key}>{key}: {value ? 'Has data' : 'No data'}</p>
+          ))}
+        </div>
       </div>
 
       {/* Camera Modal */}

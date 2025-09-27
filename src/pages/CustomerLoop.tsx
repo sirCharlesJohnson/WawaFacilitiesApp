@@ -19,11 +19,7 @@ interface CustomerLoopProps {
 
 export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}, onTaskComplete, onLoopComplete }: CustomerLoopProps) {
   const isMobile = useMediaQuery('(max-width: 768px)');
-  const [isRunning, setIsRunning] = useState(false);
-  const [elapsedTime, setElapsedTime] = useState(0);
-  const [completedTasks, setCompletedTasks] = useState<Set<number>>(new Set());
   const [photos, setPhotos] = useState<{ [key: string]: string }>({});
-  const [notes, setNotes] = useState<{ [key: number]: string }>({});
   const [showCamera, setShowCamera] = useState(false);
   const [currentPhotoTask, setCurrentPhotoTask] = useState<{ taskIndex: number; photoType: 'before' | 'after' } | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -104,10 +100,11 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
 
   // Check for loop completion
   useEffect(() => {
-    if (completedTasks.size === tasks.length && completedTasks.size > 0 && onLoopComplete) {
-      onLoopComplete(1, formatTime(elapsedTime), tasks.length);
+    if (loopState.completedTasks.size === tasks.length && loopState.completedTasks.size > 0 && onLoopComplete) {
+      onLoopComplete(1, formatTime(loopState.elapsedTime), tasks.length);
     }
-  }, [completedTasks.size, tasks.length, elapsedTime, onLoopComplete]);
+  }, [loopState.completedTasks.size, tasks.length, loopState.elapsedTime, onLoopComplete]);
+  
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -178,7 +175,8 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
 
   const handleTaskComplete = (taskIndex: number) => {
     const task = tasks[taskIndex];
-    setCompletedTasks(prev => new Set([...prev, taskIndex]));
+    const newCompletedTasks = new Set([...loopState.completedTasks, taskIndex]);
+    onLoopStateUpdate({ completedTasks: newCompletedTasks });
     
     // Notify parent component
     if (onTaskComplete) {
@@ -186,7 +184,7 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
     }
   };
 
-  const progress = Math.round((completedTasks.size / tasks.length) * 100);
+  const progress = Math.round((loopState.completedTasks.size / tasks.length) * 100);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -309,7 +307,7 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
                 <button
                   onClick={() => handleTaskComplete(index)}
                   className={`p-2 rounded-full transition-colors ${
-                    completedTasks.has(index)
+                    loopState.completedTasks.has(index)
                       ? 'bg-green-100 text-green-600'
                       : 'bg-gray-100 text-gray-400 hover:bg-green-100 hover:text-green-600'
                   }`}
@@ -425,7 +423,7 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
         </div>
 
         {/* Completion Status */}
-        {loopState.completedTasks.size === tasks.length && (
+        {loopState.completedTasks.size === tasks.length && loopState.completedTasks.size > 0 && (
           <div className="mt-6 p-6 bg-green-100 border border-green-200 rounded-lg">
             <div className="flex items-center">
               <CheckCircle className="w-8 h-8 text-green-600 mr-4" />

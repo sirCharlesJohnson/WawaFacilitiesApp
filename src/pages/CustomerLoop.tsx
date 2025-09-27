@@ -425,7 +425,12 @@ export default function CustomerLoop({ onBack }: CustomerLoopProps) {
 
               {/* Notes Section */}
               <div>
+                <label htmlFor={`notes-${index}`} className="sr-only">
+                  Notes for {task.title}
+                </label>
                 <textarea
+                  id={`notes-${index}`}
+                  name={`notes-${index}`}
                   placeholder="Add notes about this task..."
                   value={notes[index] || ''}
                   onChange={(e) => setNotes(prev => ({ ...prev, [index]: e.target.value }))}

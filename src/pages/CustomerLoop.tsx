@@ -17,7 +17,7 @@ interface CustomerLoopProps {
   onLoopStateUpdate: (newState: Partial<CustomerLoopProps['loopState']>) => void;
 }
 
-export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}, onTaskComplete, onLoopComplete }: CustomerLoopProps) {
+export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}, onTaskComplete, onLoopComplete, loopState, onLoopStateUpdate }: CustomerLoopProps) {
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [photos, setPhotos] = useState<{ [key: string]: string }>({});
   const [showCamera, setShowCamera] = useState(false);

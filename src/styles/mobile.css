@@ -1,0 +1,82 @@
+/* Mobile-specific styles and improvements */
+
+/* Ensure proper viewport handling */
+@media (max-width: 768px) {
+  /* Prevent horizontal scrolling */
+  body {
+    overflow-x: hidden;
+  }
+  
+  /* Improve touch targets */
+  button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Better spacing for mobile */
+  .space-y-4 > * + * {
+    margin-top: 0.75rem;
+  }
+  
+  /* Improve text readability on mobile */
+  .text-sm {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+  
+  /* Better modal handling on mobile */
+  .fixed.inset-0 {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+  }
+  
+  /* Improve video element on mobile */
+  video {
+    width: 100%;
+    height: auto;
+    max-height: 50vh;
+  }
+  
+  /* Better button spacing on mobile */
+  .flex.space-x-2 > * + * {
+    margin-left: 0.5rem;
+  }
+  
+  /* Improve card layouts on mobile */
+  .rounded-lg {
+    border-radius: 0.5rem;
+  }
+  
+  /* Better padding for mobile cards */
+  .p-3 {
+    padding: 0.75rem;
+  }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  /* Fix viewport height issues on iOS */
+  .min-h-screen {
+    min-height: -webkit-fill-available;
+  }
+  
+  /* Improve video playback on iOS */
+  video {
+    -webkit-playsinline: true;
+    playsinline: true;
+  }
+}
+
+/* Landscape orientation improvements */
+@media (max-width: 768px) and (orientation: landscape) {
+  .max-h-[90vh] {
+    max-height: 80vh;
+  }
+  
+  video {
+    max-height: 40vh;
+  }
+}

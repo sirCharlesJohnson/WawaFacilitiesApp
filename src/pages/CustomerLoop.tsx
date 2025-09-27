@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, Camera, CheckCircle, Users, Trash2, Coffee, AlertTriangle, Droplets, Home, Play, Square, RotateCcw, Printer, Settings, Timer } from 'lucide-react';
+import { ArrowLeft, Camera, CheckCircle, Users, Trash2, Coffee, AlertTriangle, Droplets, Home, Play, Square, RotateCcw, Printer, Timer } from 'lucide-react';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 
 interface CustomerLoopProps {
@@ -13,7 +13,7 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
   const [isRunning, setIsRunning] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [completedTasks, setCompletedTasks] = useState<Set<number>>(new Set());
-  const [photos, setPhotos] = useState<{ [key: string]: string }>(globalPhotos);
+  const [photos, setPhotos] = useState<{ [key: string]: string }>({});
   const [notes, setNotes] = useState<{ [key: number]: string }>({});
   const [showCamera, setShowCamera] = useState(false);
   const [currentPhotoTask, setCurrentPhotoTask] = useState<{ taskIndex: number; photoType: 'before' | 'after' } | null>(null);
@@ -109,116 +109,54 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
     setCompletedTasks(new Set());
     setPhotos({});
     setNotes({});
-  };
-
-  const handlePhotoCapture = async (taskIndex: number, photoType: 'before' | 'after') => {
-    setCameraError(null);
-    setCurrentPhotoTask({ taskIndex, photoType });
-    
-    try {
-      const constraints = {
-        video: {
-          facingMode: { ideal: 'environment' },
-          width: { ideal: 1920, max: 1920 },
-          height: { ideal: 1080, max: 1080 }
-        }
-      };
-
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      streamRef.current = stream;
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.playsInline = true;
-        videoRef.current.muted = true;
-        videoRef.current.autoPlay = true;
-        
-        // Wait for video to be ready
-        videoRef.current.onloadedmetadata = () => {
-          if (videoRef.current) {
-            videoRef.current.play().catch(console.error);
-          }
-        };
-        
-        setShowCamera(true);
-      }
-    } catch (error) {
-      console.error('Camera error:', error);
-      setCameraError(`Unable to access camera: ${error.message}. Please check permissions and try again.`);
-      setShowCamera(true); // Show modal even with error so user can see the message
+    if (onPhotosUpdate) {
+      onPhotosUpdate({});
     }
   };
 
-  const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current && streamRef.current && currentPhotoTask) {
-      const canvas = canvasRef.current;
-      const video = videoRef.current;
-      const context = canvas.getContext('2d');
-      
-      if (context) {
-        // Set canvas dimensions to match video
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        
-        if (canvas.width > 0 && canvas.height > 0) {
-          // Draw the video frame to canvas
-          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+  // Simplified photo capture using file input
+  const handlePhotoCapture = (taskIndex: number, photoType: 'before' | 'after') => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.capture = 'environment'; // Use rear camera on mobile
+    
+    input.onchange = (event) => {
+      const file = (event.target as HTMLInputElement).files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const photoDataUrl = e.target?.result as string;
+          const photoKey = `${taskIndex}-${photoType}`;
           
-          // Convert to data URL
-          const photoDataUrl = canvas.toDataURL('image/jpeg', 0.8);
-          const photoKey = `${currentPhotoTask.taskIndex}-${currentPhotoTask.photoType}`;
+          console.log('📸 PHOTO CAPTURED:', {
+            key: photoKey,
+            dataLength: photoDataUrl.length,
+            taskIndex,
+            photoType
+          });
           
-          console.log('=== PHOTO CAPTURE DEBUG ===');
-          console.log('Photo key:', photoKey);
-          console.log('Photo data URL length:', photoDataUrl.length);
-          console.log('Photo data URL preview:', photoDataUrl.substring(0, 50) + '...');
-          console.log('Current photos before update:', Object.keys(photos));
-          
-          // Update photos state
+          // Update local photos state
           const updatedPhotos = {
             ...photos,
             [photoKey]: photoDataUrl
           };
           
-          console.log('Updated photos after capture:', Object.keys(updatedPhotos));
-          console.log('Photo exists in updated state:', !!updatedPhotos[photoKey]);
-          
           setPhotos(updatedPhotos);
           
           // Update global photos state
           if (onPhotosUpdate) {
-            console.log('Calling onPhotosUpdate with:', Object.keys(updatedPhotos));
+            console.log('🔄 UPDATING GLOBAL PHOTOS:', Object.keys(updatedPhotos));
             onPhotosUpdate(updatedPhotos);
-          } else {
-            console.log('WARNING: onPhotosUpdate is not available');
           }
           
-          // Force a re-render by updating a dummy state
-          setTimeout(() => {
-            console.log('Photos state after timeout:', Object.keys(photos));
-          });
-          
-          stopCamera();
-        } else {
-          setCameraError('Video not ready. Please wait a moment and try again.');
-        }
-      } else {
-        setCameraError('Unable to capture photo. Please try again.');
+          console.log('✅ PHOTO STORED SUCCESSFULLY');
+        };
+        reader.readAsDataURL(file);
       }
-    }
-  };
-
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
-    }
-    setShowCamera(false);
-    setCurrentPhotoTask(null);
-    setCameraError(null);
+    };
+    
+    input.click();
   };
 
   const handleTaskComplete = (taskIndex: number) => {
@@ -303,6 +241,28 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
           </div>
         </div>
 
+        {/* Debug Info */}
+        <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-4 mb-6">
+          <h3 className="font-semibold text-yellow-800 mb-2">📊 Photo Debug Info</h3>
+          <div className="text-sm text-yellow-700 space-y-1">
+            <p>📸 Photos stored locally: {Object.keys(photos).length}</p>
+            <p>🔑 Photo keys: {Object.keys(photos).join(', ') || 'None'}</p>
+            <p>🌐 Global photos received: {Object.keys(globalPhotos).length}</p>
+            <button 
+              onClick={() => {
+                console.log('🔍 CURRENT STATE:', {
+                  localPhotos: photos,
+                  globalPhotos,
+                  photoKeys: Object.keys(photos)
+                });
+              }}
+              className="mt-2 px-3 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
+            >
+              Log State to Console
+            </button>
+          </div>
+        </div>
+
         {/* Tasks List */}
         <div className="space-y-4">
           {tasks.map((task, index) => (
@@ -358,15 +318,6 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
                           src={photos[`${index}-before`]}
                           alt="Before photo"
                           className="w-full h-32 object-cover rounded-lg border mb-2"
-                          onError={(e) => {
-                            console.error('Error loading before photo for task', index);
-                            console.error('Photo key:', `${index}-before`);
-                            console.error('Photo exists in state:', !!photos[`${index}-before`]);
-                            console.error('All photo keys:', Object.keys(photos));
-                          }}
-                          onLoad={() => {
-                            console.log('Before photo loaded successfully for task', index);
-                          }}
                         />
                         <button
                           onClick={() => handlePhotoCapture(index, 'before')}
@@ -406,15 +357,6 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
                           src={photos[`${index}-after`]}
                           alt="After photo"
                           className="w-full h-32 object-cover rounded-lg border mb-2"
-                          onError={(e) => {
-                            console.error('Error loading after photo for task', index);
-                            console.error('Photo key:', `${index}-after`);
-                            console.error('Photo exists in state:', !!photos[`${index}-after`]);
-                            console.error('All photo keys:', Object.keys(photos));
-                          }}
-                          onLoad={() => {
-                            console.log('After photo loaded successfully for task', index);
-                          }}
                         />
                         <button
                           onClick={() => handlePhotoCapture(index, 'after')}
@@ -471,89 +413,7 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
             </div>
           </div>
         )}
-        {/* Debug Info - Remove this after testing */}
-        <div className="mt-4 p-4 bg-yellow-100 rounded-lg text-sm border-2 border-yellow-300">
-          <h4 className="font-semibold mb-2">Debug Info:</h4>
-          <p>Total photos stored: {Object.keys(photos).length}</p>
-          <p>Photo keys: {Object.keys(photos).join(', ')}</p>
-          <p>Global photos prop keys: {Object.keys(globalPhotos || {}).join(', ')}</p>
-          {Object.entries(photos).map(([key, value]) => (
-            <p key={key}>{key}: {value ? `Has data (${value.length} chars)` : 'No data'}</p>
-          ))}
-          <button 
-            onClick={() => console.log('Current photos state:', photos)}
-            className="mt-2 px-3 py-1 bg-blue-500 text-white rounded text-xs"
-          >
-            Log Photos to Console
-          </button>
-        </div>
       </div>
-
-      {/* Camera Modal */}
-      {showCamera && (
-        <div className="fixed inset-0 bg-black bg-opacity-95 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg w-full max-w-lg max-h-[95vh] overflow-y-auto">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold p-4 pb-0">
-                Take {currentPhotoTask?.photoType} Photo
-              </h3>
-              <button
-                onClick={stopCamera}
-                className="text-gray-500 hover:text-gray-700 text-2xl leading-none p-4 pb-0"
-              >
-                ×
-              </button>
-            </div>
-            
-            <div className="px-4">
-              {cameraError ? (
-                <div className="mb-4 p-4 bg-red-100 border border-red-200 rounded-lg">
-                  <p className="text-red-800 text-sm">{cameraError}</p>
-                  <button
-                    onClick={() => handlePhotoCapture(currentPhotoTask?.taskIndex || 0, currentPhotoTask?.photoType || 'before')}
-                    className="mt-2 text-blue-600 text-sm underline"
-                  >
-                    Try Again
-                  </button>
-                </div>
-              ) : (
-                <div className="mb-4 relative bg-black rounded-lg overflow-hidden aspect-video">
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              )}
-              
-              <div className="flex space-x-3 pb-4">
-                <video
-                  ref={videoRef}
-                  style={{ display: 'none' }}
-                />
-                <button
-                  onClick={capturePhoto}
-                  disabled={!!cameraError}
-                  className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
-                >
-                  📷 Capture Photo
-                </button>
-                <button
-                  onClick={stopCamera}
-                  className="flex-1 bg-gray-600 text-white py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors font-medium min-h-[44px]"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      <canvas ref={canvasRef} className="hidden" />
     </div>
   );
 }

@@ -10,15 +10,17 @@ function App() {
   const [globalPhotos, setGlobalPhotos] = useState<{ [key: string]: string }>({});
 
   const handlePhotosUpdate = (photos: { [key: string]: string }) => {
-    console.log('=== APP PHOTOS UPDATE ===');
-    console.log('Received photos:', Object.keys(photos));
-    console.log('Current globalPhotos:', Object.keys(globalPhotos));
+    console.log('🔄 APP PHOTOS UPDATE:', {
+      received: Object.keys(photos),
+      current: Object.keys(globalPhotos),
+      newCount: Object.keys(photos).length
+    });
     setGlobalPhotos(photos);
-    console.log('Updated globalPhotos to:', Object.keys(photos));
+    console.log('✅ Global photos updated successfully');
   };
 
   const handleClearPhotos = () => {
-    console.log('=== CLEARING ALL PHOTOS ===');
+    console.log('🗑️ CLEARING ALL PHOTOS');
     setGlobalPhotos({});
   };
 

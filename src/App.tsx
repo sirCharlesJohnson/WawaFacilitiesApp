@@ -9,6 +9,15 @@ function App() {
   const [currentPage, setCurrentPage] = useState<'dashboard' | 'customer-loop' | 'daily-tasks' | 'photos'>('dashboard');
   const [globalPhotos, setGlobalPhotos] = useState<{ [key: string]: string }>({});
   const [completedTasks, setCompletedTasks] = useState<number>(0);
+  
+  // Customer Loop persistent state
+  const [loopState, setLoopState] = useState({
+    isRunning: false,
+    elapsedTime: 0,
+    completedTasks: new Set<number>(),
+    notes: {} as { [key: number]: string }
+  });
+  
   const [recentActivities, setRecentActivities] = useState<Array<{
     id: string;
     type: 'task' | 'photo' | 'loop' | 'issue';
@@ -76,6 +85,11 @@ function App() {
     };
     setRecentActivities(prev => [newActivity, ...prev.slice(0, 4)]);
   };
+
+  const handleLoopStateUpdate = (newState: Partial<typeof loopState>) => {
+    setLoopState(prev => ({ ...prev, ...newState }));
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {currentPage === 'dashboard' ? (
@@ -92,6 +106,8 @@ function App() {
           globalPhotos={globalPhotos}
           onTaskComplete={handleTaskComplete}
           onLoopComplete={handleLoopComplete}
+          loopState={loopState}
+          onLoopStateUpdate={handleLoopStateUpdate}
         />
       ) : currentPage === 'photos' ? (
         <Photos 

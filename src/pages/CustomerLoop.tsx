@@ -8,6 +8,13 @@ interface CustomerLoopProps {
   globalPhotos?: { [key: string]: string };
   onTaskComplete?: (taskTitle: string, source: 'daily' | 'loop') => void;
   onLoopComplete?: (loopNumber: number, duration: string, tasksCompleted: number) => void;
+  loopState: {
+    isRunning: boolean;
+    elapsedTime: number;
+    completedTasks: Set<number>;
+    notes: { [key: number]: string };
+  };
+  onLoopStateUpdate: (newState: Partial<CustomerLoopProps['loopState']>) => void;
 }
 
 export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}, onTaskComplete, onLoopComplete }: CustomerLoopProps) {
@@ -78,9 +85,9 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
 
   // Timer functionality
   useEffect(() => {
-    if (isRunning) {
+    if (loopState.isRunning) {
       intervalRef.current = setInterval(() => {
-        setElapsedTime(prev => prev + 1);
+        onLoopStateUpdate({ elapsedTime: loopState.elapsedTime + 1 });
       }, 1000);
     } else {
       if (intervalRef.current) {
@@ -93,7 +100,7 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
         clearInterval(intervalRef.current);
       }
     };
-  }, [isRunning]);
+  }, [loopState.isRunning, loopState.elapsedTime, onLoopStateUpdate]);
 
   // Check for loop completion
   useEffect(() => {
@@ -108,15 +115,17 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
   };
 
   const startLoop = () => {
-    setIsRunning(true);
+    onLoopStateUpdate({ isRunning: true });
   };
 
   const resetLoop = () => {
-    setIsRunning(false);
-    setElapsedTime(0);
-    setCompletedTasks(new Set());
+    onLoopStateUpdate({
+      isRunning: false,
+      elapsedTime: 0,
+      completedTasks: new Set(),
+      notes: {}
+    });
     setPhotos({});
-    setNotes({});
     if (onPhotosUpdate) {
       onPhotosUpdate({});
     }
@@ -211,12 +220,12 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
           {/* Timer and Progress Section */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
             <div className="text-center">
-              <div className="text-3xl font-bold text-green-600 mb-1">{formatTime(elapsedTime)}</div>
+              <div className="text-3xl font-bold text-green-600 mb-1">{formatTime(loopState.elapsedTime)}</div>
               <div className="text-sm text-gray-600">Elapsed Time</div>
             </div>
             
             <div className="text-center">
-              <div className="text-3xl font-bold text-blue-600 mb-1">{completedTasks.size}/{tasks.length}</div>
+              <div className="text-3xl font-bold text-blue-600 mb-1">{loopState.completedTasks.size}/{tasks.length}</div>
               <div className="text-sm text-gray-600">Tasks Complete</div>
             </div>
             
@@ -226,7 +235,7 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
             </div>
             
             <div className="flex flex-col space-y-2">
-              {!isRunning ? (
+              {!loopState.isRunning ? (
                 <button
                   onClick={startLoop}
                   className="flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
@@ -236,7 +245,7 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
                 </button>
               ) : (
                 <button
-                  onClick={() => setIsRunning(false)}
+                  onClick={() => onLoopStateUpdate({ isRunning: false })}
                   className="flex items-center justify-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
                 >
                   <Square className="w-4 h-4 mr-2" />
@@ -403,8 +412,10 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
                   id={`notes-${index}`}
                   name={`notes-${index}`}
                   placeholder="Add notes about this task..."
-                  value={notes[index] || ''}
-                  onChange={(e) => setNotes(prev => ({ ...prev, [index]: e.target.value }))}
+                  value={loopState.notes[index] || ''}
+                  onChange={(e) => onLoopStateUpdate({ 
+                    notes: { ...loopState.notes, [index]: e.target.value }
+                  })}
                   className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   rows={3}
                 />
@@ -414,14 +425,14 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
         </div>
 
         {/* Completion Status */}
-        {completedTasks.size === tasks.length && (
+        {loopState.completedTasks.size === tasks.length && (
           <div className="mt-6 p-6 bg-green-100 border border-green-200 rounded-lg">
             <div className="flex items-center">
               <CheckCircle className="w-8 h-8 text-green-600 mr-4" />
               <div>
                 <h3 className="text-green-800 font-semibold text-lg">Customer Loop #1 Completed!</h3>
                 <p className="text-green-700 mt-1">
-                  All {tasks.length} tasks completed in {formatTime(elapsedTime)}. Great job!
+                  All {tasks.length} tasks completed in {formatTime(loopState.elapsedTime)}. Great job!
                 </p>
               </div>
             </div>

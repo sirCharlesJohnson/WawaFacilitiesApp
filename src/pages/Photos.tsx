@@ -21,6 +21,10 @@ interface PhotoMetadata {
 export default function Photos({ onBack, photos, onClearPhotos }: PhotosProps) {
   const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
 
+  console.log('=== PHOTOS PAGE RENDER ===');
+  console.log('Received photos prop:', Object.keys(photos));
+  console.log('Photos prop values:', photos);
+
   // Convert photos object to metadata array
   const photoMetadata: PhotoMetadata[] = Object.entries(photos).map(([key, dataUrl]) => {
     const [taskIndex, photoType] = key.split('-');

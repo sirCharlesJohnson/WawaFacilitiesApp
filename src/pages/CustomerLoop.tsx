@@ -168,27 +168,34 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
           const photoDataUrl = canvas.toDataURL('image/jpeg', 0.8);
           const photoKey = `${currentPhotoTask.taskIndex}-${currentPhotoTask.photoType}`;
           
-          const fileName = `Photo_${Date.now()}.jpg`;
-          console.log('Photo captured:', fileName);
-          console.log('Setting photo with key:', photoKey);
+          console.log('=== PHOTO CAPTURE DEBUG ===');
+          console.log('Photo key:', photoKey);
           console.log('Photo data URL length:', photoDataUrl.length);
-          console.log('Current photos state:', Object.keys(photos));
+          console.log('Photo data URL preview:', photoDataUrl.substring(0, 50) + '...');
+          console.log('Current photos before update:', Object.keys(photos));
           
           // Update photos state
-          setPhotos(prevPhotos => {
-            const updatedPhotos = {
-              ...prevPhotos,
-              [photoKey]: photoDataUrl
-            };
-            console.log('Updated photos state keys:', Object.keys(updatedPhotos));
-            console.log('Photo stored for key:', photoKey, 'exists:', !!updatedPhotos[photoKey]);
-            
-            // Update global photos state
-            if (onPhotosUpdate) {
-              onPhotosUpdate(updatedPhotos);
-            }
-            
-            return updatedPhotos;
+          const updatedPhotos = {
+            ...photos,
+            [photoKey]: photoDataUrl
+          };
+          
+          console.log('Updated photos after capture:', Object.keys(updatedPhotos));
+          console.log('Photo exists in updated state:', !!updatedPhotos[photoKey]);
+          
+          setPhotos(updatedPhotos);
+          
+          // Update global photos state
+          if (onPhotosUpdate) {
+            console.log('Calling onPhotosUpdate with:', Object.keys(updatedPhotos));
+            onPhotosUpdate(updatedPhotos);
+          } else {
+            console.log('WARNING: onPhotosUpdate is not available');
+          }
+          
+          // Force a re-render by updating a dummy state
+          setTimeout(() => {
+            console.log('Photos state after timeout:', Object.keys(photos));
           });
           
           stopCamera();
@@ -465,13 +472,20 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
           </div>
         )}
         {/* Debug Info - Remove this after testing */}
-        <div className="mt-4 p-4 bg-gray-100 rounded-lg text-sm">
+        <div className="mt-4 p-4 bg-yellow-100 rounded-lg text-sm border-2 border-yellow-300">
           <h4 className="font-semibold mb-2">Debug Info:</h4>
           <p>Total photos stored: {Object.keys(photos).length}</p>
           <p>Photo keys: {Object.keys(photos).join(', ')}</p>
+          <p>Global photos prop keys: {Object.keys(globalPhotos || {}).join(', ')}</p>
           {Object.entries(photos).map(([key, value]) => (
-            <p key={key}>{key}: {value ? 'Has data' : 'No data'}</p>
+            <p key={key}>{key}: {value ? `Has data (${value.length} chars)` : 'No data'}</p>
           ))}
+          <button 
+            onClick={() => console.log('Current photos state:', photos)}
+            className="mt-2 px-3 py-1 bg-blue-500 text-white rounded text-xs"
+          >
+            Log Photos to Console
+          </button>
         </div>
       </div>
 

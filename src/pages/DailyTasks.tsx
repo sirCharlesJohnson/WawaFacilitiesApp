@@ -3,6 +3,7 @@ import { ArrowLeft, Printer, Plus, CheckCircle, Clock, Users, Snowflake, Home, T
 
 interface DailyTasksProps {
   onBack: () => void;
+  onTaskComplete?: (taskTitle: string, source: 'daily' | 'loop') => void;
 }
 
 interface Task {
@@ -16,7 +17,7 @@ interface Task {
   completed: boolean;
 }
 
-export default function DailyTasks({ onBack }: DailyTasksProps) {
+export default function DailyTasks({ onBack, onTaskComplete }: DailyTasksProps) {
   const [completedTasks, setCompletedTasks] = useState<Set<number>>(new Set());
   const [notes, setNotes] = useState<{ [key: number]: string }>({});
   const [activeCategory, setActiveCategory] = useState('All');
@@ -272,12 +273,17 @@ export default function DailyTasks({ onBack }: DailyTasksProps) {
   const progress = Math.round((completedCount / totalTasks) * 100);
 
   const handleTaskComplete = (taskId: number) => {
+    const task = tasks.find(t => t.id === taskId);
     setCompletedTasks(prev => {
       const newSet = new Set(prev);
       if (newSet.has(taskId)) {
         newSet.delete(taskId);
       } else {
         newSet.add(taskId);
+        // Notify parent component when task is completed
+        if (task && onTaskComplete) {
+          onTaskComplete(task.title, 'daily');
+        }
       }
       return newSet;
     });

@@ -6,9 +6,11 @@ interface CustomerLoopProps {
   onBack: () => void;
   onPhotosUpdate?: (photos: { [key: string]: string }) => void;
   globalPhotos?: { [key: string]: string };
+  onTaskComplete?: (taskTitle: string, source: 'daily' | 'loop') => void;
+  onLoopComplete?: (loopNumber: number, duration: string, tasksCompleted: number) => void;
 }
 
-export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {} }: CustomerLoopProps) {
+export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}, onTaskComplete, onLoopComplete }: CustomerLoopProps) {
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [isRunning, setIsRunning] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -93,6 +95,12 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
     };
   }, [isRunning]);
 
+  // Check for loop completion
+  useEffect(() => {
+    if (completedTasks.size === tasks.length && completedTasks.size > 0 && onLoopComplete) {
+      onLoopComplete(1, formatTime(elapsedTime), tasks.length);
+    }
+  }, [completedTasks.size, tasks.length, elapsedTime, onLoopComplete]);
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -160,7 +168,13 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
   };
 
   const handleTaskComplete = (taskIndex: number) => {
+    const task = tasks[taskIndex];
     setCompletedTasks(prev => new Set([...prev, taskIndex]));
+    
+    // Notify parent component
+    if (onTaskComplete) {
+      onTaskComplete(task.title, 'loop');
+    }
   };
 
   const progress = Math.round((completedTasks.size / tasks.length) * 100);

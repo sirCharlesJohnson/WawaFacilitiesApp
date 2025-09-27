@@ -9,7 +9,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-50">
       {currentPage === 'dashboard' ? (
-        <Dashboard onNavigateToCustomerLoop={() => setCurrentPage('customer-loop')} />
+        <Dashboard onNavigate={() => setCurrentPage('customer-loop')} />
       ) : (
         <CustomerLoop onNavigateBack={() => setCurrentPage('dashboard')} />
       )}

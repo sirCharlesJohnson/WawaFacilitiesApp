@@ -21,12 +21,6 @@ export default function Dashboard({ onNavigate, completedTasks, recentActivities
     { icon: BarChart3, label: 'Dashboard', active: true },
     { icon: Clock, label: 'Customer Loop', onClick: () => onNavigate('customer-loop') },
     { icon: CheckCircle, label: 'Daily Tasks', onClick: () => onNavigate('daily-tasks') },
-    { icon: FileText, label: 'Work Orders' },
-    { icon: Settings, label: 'Equipment' },
-    { icon: Shield, label: 'Safety' },
-    { icon: Users, label: 'Vendors' },
-    { icon: Package, label: 'Inventory' },
-    { icon: AlertTriangle, label: 'Issues' },
     { icon: Image, label: 'Photos', onClick: () => onNavigate('photos') }
   ];
 

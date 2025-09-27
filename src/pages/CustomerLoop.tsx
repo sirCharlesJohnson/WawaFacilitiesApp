@@ -166,13 +166,19 @@ export default function CustomerLoop({ onBack }: CustomerLoopProps) {
           const photoDataUrl = canvas.toDataURL('image/jpeg', 0.8);
           const photoKey = `${currentPhotoTask.taskIndex}-${currentPhotoTask.photoType}`;
           
-          console.log('Photo captured:', `Photo_${Date.now()}.jpg`);
+          const fileName = `Photo_${Date.now()}.jpg`;
+          console.log('Photo captured:', fileName);
           console.log('Photo key:', photoKey);
           console.log('Photo data URL length:', photoDataUrl.length);
+          console.log('Current photos state before update:', photos);
           
           setPhotos(prev => ({
-            ...prev,
-            [photoKey]: photoDataUrl
+            const newPhotos = {
+              ...prev,
+              [photoKey]: photoDataUrl
+            };
+            console.log('Updated photos state:', newPhotos);
+            return newPhotos;
           }));
           
           stopCamera();
@@ -321,20 +327,34 @@ export default function CustomerLoop({ onBack }: CustomerLoopProps) {
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium text-gray-700">Before Photo</span>
-                      {photos[`${index}-before`] && (
+                      {photos[`${index}-before`] ? (
                         <span className="text-xs text-green-600 flex items-center">
                           <CheckCircle className="w-3 h-3 mr-1" />
                           Captured
                         </span>
-                      )}
+                      ) : null}
                     </div>
                     
                     {photos[`${index}-before`] ? (
+                      <div className="relative">
                       <img
                         src={photos[`${index}-before`]}
                         alt="Before photo"
                         className="w-full h-32 object-cover rounded-lg border mb-2"
+                          onError={(e) => {
+                            console.error('Error loading before photo for task', index, e);
+                          }}
+                          onLoad={() => {
+                            console.log('Before photo loaded successfully for task', index);
+                          }}
                       />
+                        <button
+                          onClick={() => handlePhotoCapture(index, 'before')}
+                          className="absolute top-2 right-2 bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700"
+                        >
+                          Retake
+                        </button>
+                      </div>
                     ) : (
                       <button
                         onClick={() => handlePhotoCapture(index, 'before')}
@@ -352,20 +372,34 @@ export default function CustomerLoop({ onBack }: CustomerLoopProps) {
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium text-gray-700">After Photo</span>
-                      {photos[`${index}-after`] && (
+                      {photos[`${index}-after`] ? (
                         <span className="text-xs text-green-600 flex items-center">
                           <CheckCircle className="w-3 h-3 mr-1" />
                           Captured
                         </span>
-                      )}
+                      ) : null}
                     </div>
                     
                     {photos[`${index}-after`] ? (
+                      <div className="relative">
                       <img
                         src={photos[`${index}-after`]}
                         alt="After photo"
                         className="w-full h-32 object-cover rounded-lg border mb-2"
+                          onError={(e) => {
+                            console.error('Error loading after photo for task', index, e);
+                          }}
+                          onLoad={() => {
+                            console.log('After photo loaded successfully for task', index);
+                          }}
                       />
+                        <button
+                          onClick={() => handlePhotoCapture(index, 'after')}
+                          className="absolute top-2 right-2 bg-blue-600 text-white px-2 py-1 rounded text-xs hover:bg-blue-700"
+                        >
+                          Retake
+                        </button>
+                      </div>
                     ) : (
                       <button
                         onClick={() => handlePhotoCapture(index, 'after')}

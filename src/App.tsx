@@ -11,7 +11,7 @@ function App() {
       {currentPage === 'dashboard' ? (
         <Dashboard onNavigate={() => setCurrentPage('customer-loop')} />
       ) : (
-        <CustomerLoop onNavigateBack={() => setCurrentPage('dashboard')} />
+        <CustomerLoop onBack={() => setCurrentPage('dashboard')} />
       )}
     </div>
   );

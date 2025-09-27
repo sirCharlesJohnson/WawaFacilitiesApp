@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { ArrowLeft, Camera, CheckCircle, AlertCircle, Upload } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { ArrowLeft, Camera, CheckCircle, Users, Trash2, Coffee, AlertTriangle, Droplets, Home, Play, Square, RotateCcw, Printer, Settings, Timer } from 'lucide-react';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 
 interface CustomerLoopProps {
@@ -8,73 +8,110 @@ interface CustomerLoopProps {
 
 export default function CustomerLoop({ onBack }: CustomerLoopProps) {
   const isMobile = useMediaQuery('(max-width: 768px)');
-  const [currentTask, setCurrentTask] = useState(0);
+  const [isRunning, setIsRunning] = useState(false);
+  const [elapsedTime, setElapsedTime] = useState(0);
   const [completedTasks, setCompletedTasks] = useState<Set<number>>(new Set());
-  const [photos, setPhotos] = useState<{ [key: number]: string }>({});
+  const [photos, setPhotos] = useState<{ [key: string]: string }>({});
+  const [notes, setNotes] = useState<{ [key: number]: string }>({});
   const [showCamera, setShowCamera] = useState(false);
-  const [currentPhotoTask, setCurrentPhotoTask] = useState<number | null>(null);
+  const [currentPhotoTask, setCurrentPhotoTask] = useState<{ taskIndex: number; photoType: 'before' | 'after' } | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const tasks = [
     {
-      area: "Front End & Entrance",
-      description: "Ensure welcoming first impression",
-      items: [
-        "Check entrance doors are clean and functioning",
-        "Verify shopping carts/baskets are available and clean",
-        "Ensure promotional displays are neat and stocked",
-        "Check floor is clean and dry"
-      ]
+      title: "Restroom Check",
+      location: "Customer Restrooms",
+      icon: Users,
+      color: "text-blue-600"
     },
     {
-      area: "Checkout Area",
-      description: "Maintain efficient customer flow",
-      items: [
-        "Ensure adequate checkout lanes are open",
-        "Check queue management and signage",
-        "Verify payment systems are working",
-        "Ensure checkout areas are clean and organized"
-      ]
+      title: "Trash - Inside",
+      location: "Store Interior",
+      icon: Trash2,
+      color: "text-blue-600"
     },
     {
-      area: "Customer Service Desk",
-      description: "Support customer inquiries and returns",
-      items: [
-        "Check staff availability and response time",
-        "Ensure return/exchange process is smooth",
-        "Verify information displays are current",
-        "Check cleanliness of service area"
-      ]
+      title: "Trash - Outside",
+      location: "Exterior Areas",
+      icon: Trash2,
+      color: "text-blue-600"
     },
     {
-      area: "Restrooms",
-      description: "Maintain cleanliness and supplies",
-      items: [
-        "Check cleanliness and sanitation",
-        "Verify toilet paper and soap supplies",
-        "Ensure proper lighting and ventilation",
-        "Check for any maintenance issues"
-      ]
+      title: "Creating the Catchbox & Beer",
+      location: "Beverage Area",
+      icon: Coffee,
+      color: "text-blue-600"
     },
     {
-      area: "Main Aisles",
-      description: "Ensure clear navigation and safety",
-      items: [
-        "Check for obstacles or spills",
-        "Verify aisle signage is visible and accurate",
-        "Ensure adequate lighting throughout",
-        "Check for any safety hazards"
-      ]
+      title: "Sales Floor Debris & Safety Standards",
+      location: "Sales Floor",
+      icon: AlertTriangle,
+      color: "text-blue-600"
+    },
+    {
+      title: "Vestibule - Debris, Spot Clean Glass",
+      location: "Store Entrance",
+      icon: Droplets,
+      color: "text-blue-600"
+    },
+    {
+      title: "Front Porch - Debris",
+      location: "Front Entrance",
+      icon: Home,
+      color: "text-blue-600"
+    },
+    {
+      title: "Café - Wipe Tables & Sweep",
+      location: "Café Area",
+      icon: Coffee,
+      color: "text-blue-600"
     }
   ];
 
-  const handlePhotoCapture = async (taskIndex: number) => {
+  // Timer functionality
+  useEffect(() => {
+    if (isRunning) {
+      intervalRef.current = setInterval(() => {
+        setElapsedTime(prev => prev + 1);
+      }, 1000);
+    } else {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [isRunning]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const startLoop = () => {
+    setIsRunning(true);
+  };
+
+  const resetLoop = () => {
+    setIsRunning(false);
+    setElapsedTime(0);
+    setCompletedTasks(new Set());
+    setPhotos({});
+    setNotes({});
+  };
+
+  const handlePhotoCapture = async (taskIndex: number, photoType: 'before' | 'after') => {
     setCameraError(null);
     try {
-      // Request camera permissions with mobile-optimized settings
       const constraints = {
         video: {
           facingMode: 'environment',
@@ -91,7 +128,6 @@ export default function CustomerLoop({ onBack }: CustomerLoopProps) {
         videoRef.current.setAttribute('playsinline', 'true');
         videoRef.current.setAttribute('muted', 'true');
         
-        // Wait for video to be ready
         await new Promise((resolve) => {
           if (videoRef.current) {
             videoRef.current.onloadedmetadata = () => resolve(true);
@@ -99,7 +135,7 @@ export default function CustomerLoop({ onBack }: CustomerLoopProps) {
         });
         
         setShowCamera(true);
-        setCurrentPhotoTask(taskIndex);
+        setCurrentPhotoTask({ taskIndex, photoType });
       }
     } catch (error) {
       console.error('Camera error:', error);
@@ -108,26 +144,22 @@ export default function CustomerLoop({ onBack }: CustomerLoopProps) {
   };
 
   const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current && streamRef.current) {
+    if (videoRef.current && canvasRef.current && streamRef.current && currentPhotoTask) {
       const canvas = canvasRef.current;
       const video = videoRef.current;
       const context = canvas.getContext('2d');
       
       if (context && video.videoWidth > 0 && video.videoHeight > 0) {
-        // Set canvas dimensions
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-        
-        // Draw the video frame to canvas
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         
-        // Convert to data URL with good quality
         const photoDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        const photoKey = `${currentPhotoTask.taskIndex}-${currentPhotoTask.photoType}`;
         
-        // Store the photo
         setPhotos(prev => ({
           ...prev,
-          [currentPhotoTask!]: photoDataUrl
+          [photoKey]: photoDataUrl
         }));
         
         stopCamera();
@@ -152,24 +184,16 @@ export default function CustomerLoop({ onBack }: CustomerLoopProps) {
 
   const handleTaskComplete = (taskIndex: number) => {
     setCompletedTasks(prev => new Set([...prev, taskIndex]));
-    
-    // Move to next incomplete task
-    const nextTask = tasks.findIndex((_, index) => 
-      index > taskIndex && !completedTasks.has(index)
-    );
-    if (nextTask !== -1) {
-      setCurrentTask(nextTask);
-    }
   };
 
-  const allTasksCompleted = completedTasks.size === tasks.length;
+  const progress = Math.round((completedTasks.size / tasks.length) * 100);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 py-4">
-        {/* Mobile Header */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
-          <div className="flex items-center justify-between mb-3">
+      <div className="max-w-6xl mx-auto px-4 py-4">
+        {/* Header */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+          <div className="flex items-center justify-between mb-4">
             <button
               onClick={onBack}
               className="flex items-center text-gray-600 hover:text-gray-800 transition-colors"
@@ -177,104 +201,193 @@ export default function CustomerLoop({ onBack }: CustomerLoopProps) {
               <ArrowLeft className="w-5 h-5 mr-2" />
               <span className="hidden sm:inline">Back to Dashboard</span>
             </button>
-            <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-              {completedTasks.size}/{tasks.length}
+            
+            <div className="flex items-center space-x-4">
+              <button className="flex items-center text-gray-600 hover:text-gray-800">
+                <Printer className="w-5 h-5 mr-1" />
+                <span className="hidden sm:inline">Print Report</span>
+              </button>
+              <button className="flex items-center text-gray-600 hover:text-gray-800">
+                <Timer className="w-5 h-5 mr-1" />
+                <span className="hidden sm:inline">Timer Settings</span>
+              </button>
             </div>
           </div>
           
-          <h1 className="text-xl font-bold text-gray-900 mb-1">Customer Loop #1</h1>
-          <p className="text-sm text-gray-600">Complete every 1-1.5 hours</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Customer Loop #1</h1>
+          <p className="text-gray-600 mb-6">Complete every 1-1.5 hours for optimal store conditions</p>
+          
+          {/* Timer and Progress Section */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+            <div className="text-center">
+              <div className="text-3xl font-bold text-green-600 mb-1">{formatTime(elapsedTime)}</div>
+              <div className="text-sm text-gray-600">Elapsed Time</div>
+            </div>
+            
+            <div className="text-center">
+              <div className="text-3xl font-bold text-blue-600 mb-1">{completedTasks.size}/{tasks.length}</div>
+              <div className="text-sm text-gray-600">Tasks Complete</div>
+            </div>
+            
+            <div className="text-center">
+              <div className="text-3xl font-bold text-gray-900 mb-1">Progress</div>
+              <div className="text-2xl font-bold text-blue-600">{progress}%</div>
+            </div>
+            
+            <div className="flex flex-col space-y-2">
+              {!isRunning ? (
+                <button
+                  onClick={startLoop}
+                  className="flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+                >
+                  <Play className="w-4 h-4 mr-2" />
+                  Start Loop
+                </button>
+              ) : (
+                <button
+                  onClick={() => setIsRunning(false)}
+                  className="flex items-center justify-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                >
+                  <Square className="w-4 h-4 mr-2" />
+                  Stop
+                </button>
+              )}
+              
+              <button
+                onClick={resetLoop}
+                className="flex items-center justify-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
+              >
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Reset
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Task List - Mobile Optimized */}
-        <div className="space-y-3">
+        {/* Tasks List */}
+        <div className="space-y-4">
           {tasks.map((task, index) => (
             <div
               key={index}
-              className={`bg-white rounded-lg shadow-sm border-l-4 ${
-                completedTasks.has(index)
-                  ? 'border-l-green-500 bg-green-50'
-                  : currentTask === index
-                  ? 'border-l-blue-500 bg-blue-50'
-                  : 'border-l-gray-300'
-              }`}
+              className="bg-white rounded-lg shadow-sm border p-6"
             >
-              <div className="p-4">
-                {/* Task Header */}
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-start space-x-3 flex-1">
-                    <div className="flex-shrink-0 mt-1">
-                      {completedTasks.has(index) ? (
-                        <CheckCircle className="w-6 h-6 text-green-600" />
-                      ) : (
-                        <div className="w-6 h-6 border-2 border-gray-300 rounded-full"></div>
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 mb-1">{task.area}</h3>
-                      <p className="text-sm text-gray-600 mb-3">{task.description}</p>
-                    </div>
+              {/* Task Header */}
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-start space-x-3">
+                  <task.icon className={`w-6 h-6 ${task.color} mt-1`} />
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-1">{task.title}</h3>
+                    <p className="text-sm text-gray-600 flex items-center">
+                      <span className="w-2 h-2 bg-gray-400 rounded-full mr-2"></span>
+                      {task.location}
+                    </p>
                   </div>
                 </div>
+                
+                <button
+                  onClick={() => handleTaskComplete(index)}
+                  className={`p-2 rounded-full transition-colors ${
+                    completedTasks.has(index)
+                      ? 'bg-green-100 text-green-600'
+                      : 'bg-gray-100 text-gray-400 hover:bg-green-100 hover:text-green-600'
+                  }`}
+                >
+                  <CheckCircle className="w-6 h-6" />
+                </button>
+              </div>
 
-                {/* Task Items */}
-                <div className="ml-9 mb-4">
-                  <ul className="space-y-2 text-sm text-gray-700">
-                    {task.items.map((item, itemIndex) => (
-                      <li key={itemIndex} className="flex items-start">
-                        <span className="w-2 h-2 bg-blue-400 rounded-full mr-3 mt-2 flex-shrink-0"></span>
-                        <span className="flex-1">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Action Buttons and Photo */}
-                <div className="ml-9">
-                  {!completedTasks.has(index) && (
-                    <div className="flex space-x-2 mb-3">
-                      <button
-                        onClick={() => handlePhotoCapture(index)}
-                        className="flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium min-h-[44px]"
-                      >
-                        <Camera className="w-4 h-4 mr-2" />
-                        Take Photo
-                      </button>
-                      <button
-                        onClick={() => handleTaskComplete(index)}
-                        className="flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium min-h-[44px]"
-                      >
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        Complete
-                      </button>
+              {/* Before & After Photos Section */}
+              <div className="mb-4">
+                <p className="text-sm font-medium text-gray-700 mb-3">Before & After Photos Required</p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Before Photo */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-700">Before Photo</span>
+                      {photos[`${index}-before`] && (
+                        <span className="text-xs text-green-600 flex items-center">
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          Captured
+                        </span>
+                      )}
                     </div>
-                  )}
-                  
-                  {/* Show captured photo */}
-                  {photos[index] && (
-                    <div className="mt-3">
+                    
+                    {photos[`${index}-before`] ? (
                       <img
-                        src={photos[index]}
-                        alt={`${task.area} photo`}
-                        className="w-full max-w-xs h-32 object-cover rounded-lg border shadow-sm"
+                        src={photos[`${index}-before`]}
+                        alt="Before photo"
+                        className="w-full h-32 object-cover rounded-lg border mb-2"
                       />
+                    ) : (
+                      <button
+                        onClick={() => handlePhotoCapture(index, 'before')}
+                        className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-colors mb-2"
+                      >
+                        <div className="text-center">
+                          <Camera className="w-6 h-6 mx-auto mb-1" />
+                          <span className="text-sm">Take Photo</span>
+                        </div>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* After Photo */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-gray-700">After Photo</span>
+                      {photos[`${index}-after`] && (
+                        <span className="text-xs text-green-600 flex items-center">
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          Captured
+                        </span>
+                      )}
                     </div>
-                  )}
+                    
+                    {photos[`${index}-after`] ? (
+                      <img
+                        src={photos[`${index}-after`]}
+                        alt="After photo"
+                        className="w-full h-32 object-cover rounded-lg border mb-2"
+                      />
+                    ) : (
+                      <button
+                        onClick={() => handlePhotoCapture(index, 'after')}
+                        className="w-full h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-colors mb-2"
+                      >
+                        <div className="text-center">
+                          <Camera className="w-6 h-6 mx-auto mb-1" />
+                          <span className="text-sm">Take Photo</span>
+                        </div>
+                      </button>
+                    )}
+                  </div>
                 </div>
+              </div>
+
+              {/* Notes Section */}
+              <div>
+                <textarea
+                  placeholder="Add notes about this task..."
+                  value={notes[index] || ''}
+                  onChange={(e) => setNotes(prev => ({ ...prev, [index]: e.target.value }))}
+                  className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  rows={3}
+                />
               </div>
             </div>
           ))}
         </div>
 
         {/* Completion Status */}
-        {allTasksCompleted && (
-          <div className="mt-6 p-4 bg-green-100 border border-green-200 rounded-lg">
+        {completedTasks.size === tasks.length && (
+          <div className="mt-6 p-6 bg-green-100 border border-green-200 rounded-lg">
             <div className="flex items-center">
-              <CheckCircle className="w-6 h-6 text-green-600 mr-3" />
+              <CheckCircle className="w-8 h-8 text-green-600 mr-4" />
               <div>
-                <h3 className="text-green-800 font-semibold">Customer Loop #1 Completed!</h3>
-                <p className="text-green-700 text-sm mt-1">
-                  Great job! All tasks have been completed successfully.
+                <h3 className="text-green-800 font-semibold text-lg">Customer Loop #1 Completed!</h3>
+                <p className="text-green-700 mt-1">
+                  All {tasks.length} tasks completed in {formatTime(elapsedTime)}. Great job!
                 </p>
               </div>
             </div>
@@ -282,12 +395,14 @@ export default function CustomerLoop({ onBack }: CustomerLoopProps) {
         )}
       </div>
 
-      {/* Camera Modal - Mobile Optimized */}
+      {/* Camera Modal */}
       {showCamera && (
         <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
           <div className="bg-white rounded-t-3xl md:rounded-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Take Photo</h3>
+              <h3 className="text-lg font-semibold">
+                Take {currentPhotoTask?.photoType} Photo
+              </h3>
               <button
                 onClick={stopCamera}
                 className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
@@ -331,7 +446,6 @@ export default function CustomerLoop({ onBack }: CustomerLoopProps) {
         </div>
       )}
       
-      {/* Hidden canvas for photo capture */}
       <canvas ref={canvasRef} style={{ display: 'none' }} />
     </div>
   );

@@ -111,12 +111,14 @@ export default function CustomerLoop({ onBack }: CustomerLoopProps) {
 
   const handlePhotoCapture = async (taskIndex: number, photoType: 'before' | 'after') => {
     setCameraError(null);
+    setCurrentPhotoTask({ taskIndex, photoType });
+    
     try {
       const constraints = {
         video: {
-          facingMode: 'environment',
-          width: { ideal: 1280, max: 1920 },
-          height: { ideal: 720, max: 1080 }
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1920, max: 1920 },
+          height: { ideal: 1080, max: 1080 }
         }
       };
 
@@ -125,21 +127,23 @@ export default function CustomerLoop({ onBack }: CustomerLoopProps) {
       
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.setAttribute('playsinline', 'true');
-        videoRef.current.setAttribute('muted', 'true');
+        videoRef.current.playsInline = true;
+        videoRef.current.muted = true;
+        videoRef.current.autoPlay = true;
         
-        await new Promise((resolve) => {
+        // Wait for video to be ready
+        videoRef.current.onloadedmetadata = () => {
           if (videoRef.current) {
-            videoRef.current.onloadedmetadata = () => resolve(true);
+            videoRef.current.play().catch(console.error);
           }
-        });
+        };
         
         setShowCamera(true);
-        setCurrentPhotoTask({ taskIndex, photoType });
       }
     } catch (error) {
       console.error('Camera error:', error);
-      setCameraError('Unable to access camera. Please check permissions and try again.');
+      setCameraError(`Unable to access camera: ${error.message}. Please check permissions and try again.`);
+      setShowCamera(true); // Show modal even with error so user can see the message
     }
   };
 
@@ -149,22 +153,30 @@ export default function CustomerLoop({ onBack }: CustomerLoopProps) {
       const video = videoRef.current;
       const context = canvas.getContext('2d');
       
-      if (context && video.videoWidth > 0 && video.videoHeight > 0) {
+      if (context) {
+        // Set canvas dimensions to match video
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
         
-        const photoDataUrl = canvas.toDataURL('image/jpeg', 0.85);
-        const photoKey = `${currentPhotoTask.taskIndex}-${currentPhotoTask.photoType}`;
-        
-        setPhotos(prev => ({
-          ...prev,
-          [photoKey]: photoDataUrl
-        }));
-        
-        stopCamera();
+        if (canvas.width > 0 && canvas.height > 0) {
+          // Draw the video frame to canvas
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          
+          // Convert to data URL
+          const photoDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          const photoKey = `${currentPhotoTask.taskIndex}-${currentPhotoTask.photoType}`;
+          
+          setPhotos(prev => ({
+            ...prev,
+            [photoKey]: photoDataUrl
+          }));
+          
+          stopCamera();
+        } else {
+          setCameraError('Video not ready. Please wait a moment and try again.');
+        }
       } else {
-        setCameraError('Video not ready. Please try again.');
+        setCameraError('Unable to capture photo. Please try again.');
       }
     }
   };
@@ -397,56 +409,69 @@ export default function CustomerLoop({ onBack }: CustomerLoopProps) {
 
       {/* Camera Modal */}
       {showCamera && (
-        <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50">
-          <div className="bg-white rounded-t-3xl md:rounded-lg p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-95 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg w-full max-w-lg max-h-[95vh] overflow-y-auto">
+            {/* Header */}
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">
+              <h3 className="text-lg font-semibold p-4 pb-0">
                 Take {currentPhotoTask?.photoType} Photo
               </h3>
               <button
                 onClick={stopCamera}
-                className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
+                className="text-gray-500 hover:text-gray-700 text-2xl leading-none p-4 pb-0"
               >
                 ×
               </button>
             </div>
             
-            {cameraError ? (
-              <div className="mb-4 p-4 bg-red-100 border border-red-200 rounded-lg">
-                <p className="text-red-800 text-sm">{cameraError}</p>
-              </div>
-            ) : (
-              <div className="mb-4 relative bg-black rounded-lg overflow-hidden">
+            <div className="px-4">
+              {cameraError ? (
+                <div className="mb-4 p-4 bg-red-100 border border-red-200 rounded-lg">
+                  <p className="text-red-800 text-sm">{cameraError}</p>
+                  <button
+                    onClick={() => handlePhotoCapture(currentPhotoTask?.taskIndex || 0, currentPhotoTask?.photoType || 'before')}
+                    className="mt-2 text-blue-600 text-sm underline"
+                  >
+                    Try Again
+                  </button>
+                </div>
+              ) : (
+                <div className="mb-4 relative bg-black rounded-lg overflow-hidden aspect-video">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    muted
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
+              
+              <div className="flex space-x-3 pb-4">
                 <video
                   ref={videoRef}
-                  autoPlay
-                  playsInline
-                  muted
-                  className="w-full h-64 object-cover"
+                  style={{ display: 'none' }}
                 />
+                <button
+                  onClick={capturePhoto}
+                  disabled={!!cameraError}
+                  className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+                >
+                  📷 Capture Photo
+                </button>
+                <button
+                  onClick={stopCamera}
+                  className="flex-1 bg-gray-600 text-white py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors font-medium min-h-[44px]"
+                >
+                  Cancel
+                </button>
               </div>
-            )}
-            
-            <div className="flex space-x-3">
-              <button
-                onClick={capturePhoto}
-                disabled={!!cameraError}
-                className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
-              >
-                Capture Photo
-              </button>
-              <button
-                onClick={stopCamera}
-                className="flex-1 bg-gray-600 text-white py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors font-medium min-h-[44px]"
-              >
-                Cancel
-              </button>
             </div>
           </div>
         </div>
       )}
       
-      <canvas ref={canvasRef} style={{ display: 'none' }} />
+      <canvas ref={canvasRef} className="hidden" />
     </div>
   );
 }

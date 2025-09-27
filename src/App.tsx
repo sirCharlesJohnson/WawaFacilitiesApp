@@ -11,14 +11,35 @@ function App() {
   const [completedTasks, setCompletedTasks] = useState<number>(0);
   
   // Persistent notes state
-  const [dailyTaskNotes, setDailyTaskNotes] = useState<{ [key: number]: string }>({});
+  const [dailyTaskNotes, setDailyTaskNotes] = useState<{ [key: number]: string }>(() => {
+    try {
+      const saved = localStorage.getItem('dailyTaskNotes');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
   
   // Customer Loop persistent state
-  const [loopState, setLoopState] = useState({
-    isRunning: false,
-    elapsedTime: 0,
-    completedTasks: new Set<number>(),
-    notes: {} as { [key: number]: string }
+  const [loopState, setLoopState] = useState(() => {
+    try {
+      const saved = localStorage.getItem('loopState');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          ...parsed,
+          completedTasks: new Set(parsed.completedTasks || [])
+        };
+      }
+    } catch {
+      // Fall through to default
+    }
+    return {
+      isRunning: false,
+      elapsedTime: 0,
+      completedTasks: new Set<number>(),
+      notes: {} as { [key: number]: string }
+    };
   });
   
   const [recentActivities, setRecentActivities] = useState<Array<{
@@ -31,6 +52,32 @@ function App() {
     color: 'green' | 'blue' | 'orange' | 'red';
   }>>([]);
 
+  // Save daily task notes to localStorage whenever they change
+  const handleDailyTaskNotesUpdate = (notes: { [key: number]: string }) => {
+    setDailyTaskNotes(notes);
+    try {
+      localStorage.setItem('dailyTaskNotes', JSON.stringify(notes));
+    } catch (error) {
+      console.error('Failed to save daily task notes:', error);
+    }
+  };
+
+  // Save loop state to localStorage whenever it changes
+  const handleLoopStateUpdate = (newState: Partial<typeof loopState>) => {
+    const updatedState = { ...loopState, ...newState };
+    setLoopState(updatedState);
+    
+    try {
+      // Convert Set to Array for JSON serialization
+      const stateToSave = {
+        ...updatedState,
+        completedTasks: Array.from(updatedState.completedTasks)
+      };
+      localStorage.setItem('loopState', JSON.stringify(stateToSave));
+    } catch (error) {
+      console.error('Failed to save loop state:', error);
+    }
+  };
   const handlePhotosUpdate = (photos: { [key: string]: string }) => {
     console.log('🔄 APP PHOTOS UPDATE:', {
       received: Object.keys(photos),
@@ -89,9 +136,6 @@ function App() {
     setRecentActivities(prev => [newActivity, ...prev.slice(0, 4)]);
   };
 
-  const handleLoopStateUpdate = (newState: Partial<typeof loopState>) => {
-    setLoopState(prev => ({ ...prev, ...newState }));
-  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -123,7 +167,7 @@ function App() {
           onBack={() => setCurrentPage('dashboard')} 
           onTaskComplete={handleTaskComplete}
           notes={dailyTaskNotes}
-          onNotesUpdate={setDailyTaskNotes}
+          onNotesUpdate={handleDailyTaskNotesUpdate}
         />
       )}
     </div>

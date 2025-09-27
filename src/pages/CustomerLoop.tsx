@@ -202,11 +202,17 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
             </button>
             
             <div className="flex items-center space-x-4">
-              <button className="flex items-center text-gray-600 hover:text-gray-800">
+              <button 
+                onClick={handlePrintReport}
+                className="flex items-center text-gray-600 hover:text-gray-800"
+              >
                 <Printer className="w-5 h-5 mr-1" />
                 <span className="hidden sm:inline">Print Report</span>
               </button>
-              <button className="flex items-center text-gray-600 hover:text-gray-800">
+              <button 
+                onClick={() => setShowTimerSettings(true)}
+                className="flex items-center text-gray-600 hover:text-gray-800"
+              >
                 <Timer className="w-5 h-5 mr-1" />
                 <span className="hidden sm:inline">Timer Settings</span>
               </button>

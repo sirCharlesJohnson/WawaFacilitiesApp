@@ -173,11 +173,10 @@ export default function CustomerLoop({ onBack }: CustomerLoopProps) {
           console.log('Current photos state before update:', photos);
           
           setPhotos(prev => {
-            const newPhotos = {
-              ...prev,
-              [photoKey]: photoDataUrl
-            };
+            const newPhotos = { ...prev, [photoKey]: photoDataUrl };
             console.log('Updated photos state:', newPhotos);
+            console.log('Photo key being set:', photoKey);
+            console.log('Photo data exists:', !!photoDataUrl);
             return newPhotos;
           });
           
@@ -342,10 +341,14 @@ export default function CustomerLoop({ onBack }: CustomerLoopProps) {
                         alt="Before photo"
                         className="w-full h-32 object-cover rounded-lg border mb-2"
                           onError={(e) => {
-                            console.error('Error loading before photo for task', index, e);
+                            console.error('Error loading before photo for task', index);
+                            console.error('Photo key:', `${index}-before`);
+                            console.error('Photo exists in state:', !!photos[`${index}-before`]);
+                            console.error('Photo data length:', photos[`${index}-before`]?.length);
                           }}
                           onLoad={() => {
                             console.log('Before photo loaded successfully for task', index);
+                            console.log('Photo key:', `${index}-before`);
                           }}
                       />
                         <button
@@ -387,10 +390,14 @@ export default function CustomerLoop({ onBack }: CustomerLoopProps) {
                         alt="After photo"
                         className="w-full h-32 object-cover rounded-lg border mb-2"
                           onError={(e) => {
-                            console.error('Error loading after photo for task', index, e);
+                            console.error('Error loading after photo for task', index);
+                            console.error('Photo key:', `${index}-after`);
+                            console.error('Photo exists in state:', !!photos[`${index}-after`]);
+                            console.error('Photo data length:', photos[`${index}-after`]?.length);
                           }}
                           onLoad={() => {
                             console.log('After photo loaded successfully for task', index);
+                            console.log('Photo key:', `${index}-after`);
                           }}
                       />
                         <button

@@ -136,31 +136,33 @@ export default function Dashboard({ onNavigate, completedTasks, recentActivities
                 <div className="flex items-center text-sm text-gray-500">
                   <div className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
                   Live
-              {recentActivities.length === 0 ? (
-                <div className="text-center py-8">
-                  <Clock className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                  <p className="text-gray-500">No recent activities</p>
-                  <p className="text-sm text-gray-400 mt-1">Complete tasks to see real-time updates here</p>
                 </div>
-              ) : (
-                <div className="space-y-4">
-                  {recentActivities.map((activity) => {
-                    const IconComponent = getActivityIcon(activity.icon);
-                    const colorClasses = getActivityColor(activity.color);
-                    
-                    return (
-                      <div key={activity.id} className={`flex items-start space-x-3 p-4 rounded-lg ${colorClasses.split(' ')[1]}`}>
-                        <IconComponent className={`w-5 h-5 mt-0.5 ${colorClasses.split(' ')[0]}`} />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900">{activity.title}</p>
-                          <p className="text-sm text-gray-600">{activity.description}</p>
-                          <p className="text-xs text-gray-500 mt-1">{formatTimeAgo(activity.timestamp)}</p>
+                {recentActivities.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Clock className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-500">No recent activities</p>
+                    <p className="text-sm text-gray-400 mt-1">Complete tasks to see real-time updates here</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {recentActivities.map((activity) => {
+                      const IconComponent = getActivityIcon(activity.icon);
+                      const colorClasses = getActivityColor(activity.color);
+                      
+                      return (
+                        <div key={activity.id} className={`flex items-start space-x-3 p-4 rounded-lg ${colorClasses.split(' ')[1]}`}>
+                          <IconComponent className={`w-5 h-5 mt-0.5 ${colorClasses.split(' ')[0]}`} />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+                            <p className="text-sm text-gray-600">{activity.description}</p>
+                            <p className="text-xs text-gray-500 mt-1">{formatTimeAgo(activity.timestamp)}</p>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

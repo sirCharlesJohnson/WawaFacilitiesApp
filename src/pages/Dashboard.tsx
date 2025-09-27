@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChartBar as BarChart3, Users, CircleCheck as CheckCircle, TriangleAlert as AlertTriangle, Clock, Camera, FileText, Settings, Shield, Package, CircleAlert as AlertCircle, Image } from 'lucide-react';
+import { BarChart3, Users, CheckCircle, AlertTriangle, Clock, Camera, FileText, Settings, Shield, Package, AlertCircle, Image } from 'lucide-react';
 
 interface DashboardProps {
   onNavigate: (page: 'customer-loop') => void;

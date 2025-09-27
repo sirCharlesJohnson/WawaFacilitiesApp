@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { ArrowLeft, Camera, CircleCheck as CheckCircle, CircleAlert as AlertCircle, Upload } from 'lucide-react';
+import { ArrowLeft, Camera, CheckCircle, AlertCircle, Upload } from 'lucide-react';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 
 interface CustomerLoopProps {

@@ -1,9 +1,20 @@
-@@ .. @@
- import React, { useState } from 'react';
- import Dashboard from './pages/Dashboard';
- import CustomerLoop from './pages/CustomerLoop';
-+import './styles/mobile.css';
- 
- function App() {
-   const [currentPage, setCurrentPage] = useState<'dashboard' | 'customer-loop'>('dashboard');
- }
+import React, { useState } from 'react';
+import Dashboard from './pages/Dashboard';
+import CustomerLoop from './pages/CustomerLoop';
+import './styles/mobile.css';
+
+function App() {
+  const [currentPage, setCurrentPage] = useState<'dashboard' | 'customer-loop'>('dashboard');
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {currentPage === 'dashboard' ? (
+        <Dashboard onNavigateToCustomerLoop={() => setCurrentPage('customer-loop')} />
+      ) : (
+        <CustomerLoop onNavigateBack={() => setCurrentPage('dashboard')} />
+      )}
+    </div>
+  );
+}
+
+export default App;

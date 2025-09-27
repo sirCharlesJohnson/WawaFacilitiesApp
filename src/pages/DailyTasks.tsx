@@ -4,6 +4,8 @@ import { ArrowLeft, Printer, Plus, CheckCircle, Clock, Users, Snowflake, Home, T
 interface DailyTasksProps {
   onBack: () => void;
   onTaskComplete?: (taskTitle: string, source: 'daily' | 'loop') => void;
+  notes?: { [key: number]: string };
+  onNotesUpdate?: (notes: { [key: number]: string }) => void;
 }
 
 interface Task {
@@ -17,9 +19,8 @@ interface Task {
   completed: boolean;
 }
 
-export default function DailyTasks({ onBack, onTaskComplete }: DailyTasksProps) {
+export default function DailyTasks({ onBack, onTaskComplete, notes = {}, onNotesUpdate }: DailyTasksProps) {
   const [completedTasks, setCompletedTasks] = useState<Set<number>>(new Set());
-  const [notes, setNotes] = useState<{ [key: number]: string }>({});
   const [activeCategory, setActiveCategory] = useState('All');
 
   const tasks: Task[] = [
@@ -478,7 +479,7 @@ export default function DailyTasks({ onBack, onTaskComplete }: DailyTasksProps) 
                 <textarea
                   placeholder="Add notes about this task..."
                   value={notes[task.id] || ''}
-                  onChange={(e) => setNotes(prev => ({ ...prev, [task.id]: e.target.value }))}
+                  onChange={(e) => onNotesUpdate?.({ ...notes, [task.id]: e.target.value })}
                   className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   rows={3}
                 />

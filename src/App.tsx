@@ -10,6 +10,9 @@ function App() {
   const [globalPhotos, setGlobalPhotos] = useState<{ [key: string]: string }>({});
   const [completedTasks, setCompletedTasks] = useState<number>(0);
   
+  // Persistent notes state
+  const [dailyTaskNotes, setDailyTaskNotes] = useState<{ [key: number]: string }>({});
+  
   // Customer Loop persistent state
   const [loopState, setLoopState] = useState({
     isRunning: false,
@@ -119,6 +122,8 @@ function App() {
         <DailyTasks 
           onBack={() => setCurrentPage('dashboard')} 
           onTaskComplete={handleTaskComplete}
+          notes={dailyTaskNotes}
+          onNotesUpdate={setDailyTaskNotes}
         />
       )}
     </div>

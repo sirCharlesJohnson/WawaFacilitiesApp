@@ -4,14 +4,16 @@ import { useMediaQuery } from '../hooks/useMediaQuery';
 
 interface CustomerLoopProps {
   onBack: () => void;
+  onPhotosUpdate?: (photos: { [key: string]: string }) => void;
+  globalPhotos?: { [key: string]: string };
 }
 
-export default function CustomerLoop({ onBack }: CustomerLoopProps) {
+export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {} }: CustomerLoopProps) {
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [isRunning, setIsRunning] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [completedTasks, setCompletedTasks] = useState<Set<number>>(new Set());
-  const [photos, setPhotos] = useState<{ [key: string]: string }>({});
+  const [photos, setPhotos] = useState<{ [key: string]: string }>(globalPhotos);
   const [notes, setNotes] = useState<{ [key: number]: string }>({});
   const [showCamera, setShowCamera] = useState(false);
   const [currentPhotoTask, setCurrentPhotoTask] = useState<{ taskIndex: number; photoType: 'before' | 'after' } | null>(null);
@@ -180,6 +182,12 @@ export default function CustomerLoop({ onBack }: CustomerLoopProps) {
             };
             console.log('Updated photos state keys:', Object.keys(updatedPhotos));
             console.log('Photo stored for key:', photoKey, 'exists:', !!updatedPhotos[photoKey]);
+            
+            // Update global photos state
+            if (onPhotosUpdate) {
+              onPhotosUpdate(updatedPhotos);
+            }
+            
             return updatedPhotos;
           });
           

@@ -2,7 +2,7 @@ import React from 'react';
 import { BarChart3, Users, CheckCircle, AlertTriangle, Clock, Camera, FileText, Settings, Shield, Package, AlertCircle, Image } from 'lucide-react';
 
 interface DashboardProps {
-  onNavigate: (page: 'customer-loop' | 'daily-tasks') => void;
+  onNavigate: (page: 'customer-loop' | 'daily-tasks' | 'photos') => void;
 }
 
 export default function Dashboard({ onNavigate }: DashboardProps) {
@@ -16,7 +16,7 @@ export default function Dashboard({ onNavigate }: DashboardProps) {
     { icon: Users, label: 'Vendors' },
     { icon: Package, label: 'Inventory' },
     { icon: AlertTriangle, label: 'Issues' },
-    { icon: Image, label: 'Photos' }
+    { icon: Image, label: 'Photos', onClick: () => onNavigate('photos') }
   ];
 
   const stats = [

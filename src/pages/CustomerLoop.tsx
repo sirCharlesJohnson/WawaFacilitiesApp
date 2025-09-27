@@ -437,6 +437,112 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
             </div>
           </div>
         )}
+
+        {/* Timer Settings Modal */}
+        {showTimerSettings && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Timer Settings</h3>
+                <button
+                  onClick={() => setShowTimerSettings(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Current Timer Status
+                  </label>
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Status:</span>
+                      <span className={`text-sm font-medium ${loopState.isRunning ? 'text-green-600' : 'text-gray-600'}`}>
+                        {loopState.isRunning ? 'Running' : 'Stopped'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-sm text-gray-600">Elapsed:</span>
+                      <span className="text-sm font-medium text-gray-900">{formatTime(loopState.elapsedTime)}</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Quick Actions
+                  </label>
+                  <div className="space-y-2">
+                    <button
+                      onClick={() => {
+                        if (loopState.isRunning) {
+                          onLoopStateUpdate({ isRunning: false });
+                        } else {
+                          onLoopStateUpdate({ isRunning: true });
+                        }
+                      }}
+                      className={`w-full flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-colors ${
+                        loopState.isRunning
+                          ? 'bg-red-100 text-red-700 hover:bg-red-200'
+                          : 'bg-green-100 text-green-700 hover:bg-green-200'
+                      }`}
+                    >
+                      {loopState.isRunning ? (
+                        <>
+                          <Square className="w-4 h-4 mr-2" />
+                          Pause Timer
+                        </>
+                      ) : (
+                        <>
+                          <Play className="w-4 h-4 mr-2" />
+                          Resume Timer
+                        </>
+                      )}
+                    </button>
+                    
+                    <button
+                      onClick={() => {
+                        if (window.confirm('Are you sure you want to reset the timer? This will clear all progress.')) {
+                          resetLoop();
+                          setShowTimerSettings(false);
+                        }
+                      }}
+                      className="w-full flex items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition-colors"
+                    >
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                      Reset Timer
+                    </button>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Timer Info
+                  </label>
+                  <div className="text-sm text-gray-600 space-y-1">
+                    <p>• Customer loops should be completed every 1-1.5 hours</p>
+                    <p>• Timer continues running when you navigate to other pages</p>
+                    <p>• Progress is automatically saved</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-6 flex justify-end">
+                <button
+                  onClick={() => setShowTimerSettings(false)}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

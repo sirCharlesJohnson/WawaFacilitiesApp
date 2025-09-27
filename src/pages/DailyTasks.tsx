@@ -325,58 +325,6 @@ export default function DailyTasks({ onBack, onTaskComplete }: DailyTasksProps) 
     }
   };
 
-  const handlePrintReport = () => {
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      const completedTasksList = tasks
-        .filter((_, index) => completedTasks.has(index))
-        .map(task => `• ${task.title} (${task.location})`)
-        .join('\n');
-      
-      const reportContent = `
-        <html>
-          <head>
-            <title>Daily Tasks Report</title>
-            <style>
-              body { font-family: Arial, sans-serif; margin: 20px; }
-              h1 { color: #333; }
-              .summary { background: #f5f5f5; padding: 15px; margin: 15px 0; }
-              .tasks { margin: 15px 0; }
-              .notes { margin-top: 20px; }
-            </style>
-          </head>
-          <body>
-            <h1>Facilities Daily Role Guide Report</h1>
-            <div class="summary">
-              <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
-              <p><strong>Time:</strong> ${new Date().toLocaleTimeString()}</p>
-              <p><strong>Tasks Completed:</strong> ${completedCount}/${totalTasks}</p>
-              <p><strong>Progress:</strong> ${progress}%</p>
-              <p><strong>Active Category:</strong> ${activeCategory}</p>
-            </div>
-            <div class="tasks">
-              <h2>Completed Tasks:</h2>
-              <pre>${completedTasksList || 'No tasks completed'}</pre>
-            </div>
-            <div class="notes">
-              <h2>Notes:</h2>
-              ${Object.entries(notes)
-                .filter(([_, note]) => note.trim())
-                .map(([taskId, note]) => {
-                  const task = tasks.find(t => t.id === parseInt(taskId));
-                  return `<p><strong>${task?.title || 'Unknown Task'}:</strong> ${note}</p>`;
-                })
-                .join('') || '<p>No notes recorded</p>'}
-            </div>
-          </body>
-        </html>
-      `;
-      
-      printWindow.document.write(reportContent);
-      printWindow.document.close();
-      printWindow.print();
-    }
-  };
 
   const handleTaskComplete = (taskId: number) => {
     const task = tasks.find(t => t.id === taskId);

@@ -16,9 +16,10 @@ interface CustomerLoopProps {
   };
   onLoopStateUpdate: (newState: Partial<CustomerLoopProps['loopState']>) => void;
   currentLoopNumber: number;
+  onResetCounter?: () => void;
 }
 
-export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}, onTaskComplete, onLoopComplete, loopState, onLoopStateUpdate, currentLoopNumber }: CustomerLoopProps) {
+export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}, onTaskComplete, onLoopComplete, loopState, onLoopStateUpdate, currentLoopNumber, onResetCounter }: CustomerLoopProps) {
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [photos, setPhotos] = useState<{ [key: string]: string }>({});
   const [showTimerSettings, setShowTimerSettings] = useState(false);
@@ -101,12 +102,15 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
   }, [loopState.isRunning, loopState.elapsedTime, onLoopStateUpdate]);
 
   // Check for loop completion
-  useEffect(() => {
-    if (loopState.completedTasks.size === tasks.length && loopState.completedTasks.size > 0 && onLoopComplete) {
-      onLoopComplete(currentLoopNumber, formatTime(loopState.elapsedTime), tasks.length);
-    }
-  }, [loopState.completedTasks.size, tasks.length, loopState.elapsedTime, onLoopComplete, currentLoopNumber]);
+  const [hasNotifiedCompletion, setHasNotifiedCompletion] = useState(false);
 
+  useEffect(() => {
+    if (loopState.completedTasks.size === tasks.length && loopState.completedTasks.size > 0 && onLoopComplete && !hasNotifiedCompletion) {
+      onLoopComplete(currentLoopNumber, formatTime(loopState.elapsedTime), tasks.length);
+      setHasNotifiedCompletion(true);
+    }
+  }, [loopState.completedTasks.size, tasks.length, loopState.elapsedTime, onLoopComplete, currentLoopNumber, hasNotifiedCompletion]);
+  
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -120,7 +124,7 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
         .filter((_, index) => loopState.completedTasks.has(index))
         .map(task => `• ${task.title}`)
         .join('\n');
-
+      
       const reportContent = `
         <html>
           <head>
@@ -134,7 +138,7 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
             </style>
           </head>
           <body>
-            <h1>Customer Loop #${currentLoopNumber} Report</h1>
+            <h1>Customer Loop #{currentLoopNumber} Report</h1>
             <div class="summary">
               <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
               <p><strong>Time:</strong> ${new Date().toLocaleTimeString()}</p>
@@ -156,7 +160,7 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
           </body>
         </html>
       `;
-
+      
       printWindow.document.write(reportContent);
       printWindow.document.close();
       printWindow.print();
@@ -178,6 +182,7 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
     if (onPhotosUpdate) {
       onPhotosUpdate({});
     }
+    setHasNotifiedCompletion(false);
   };
 
   // Simplified photo capture using file input
@@ -186,7 +191,7 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
     input.type = 'file';
     input.accept = 'image/*';
     input.capture = 'environment'; // Use rear camera on mobile
-
+    
     input.onchange = (event) => {
       const file = (event.target as HTMLInputElement).files?.[0];
       if (file) {
@@ -194,34 +199,34 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
         reader.onload = (e) => {
           const photoDataUrl = e.target?.result as string;
           const photoKey = `${taskIndex}-${photoType}`;
-
+          
           console.log('📸 PHOTO CAPTURED:', {
             key: photoKey,
             dataLength: photoDataUrl.length,
             taskIndex,
             photoType
           });
-
+          
           // Update local photos state
           const updatedPhotos = {
             ...photos,
             [photoKey]: photoDataUrl
           };
-
+          
           setPhotos(updatedPhotos);
-
+          
           // Update global photos state
           if (onPhotosUpdate) {
             console.log('🔄 UPDATING GLOBAL PHOTOS:', Object.keys(updatedPhotos));
             onPhotosUpdate(updatedPhotos);
           }
-
+          
           console.log('✅ PHOTO STORED SUCCESSFULLY');
         };
         reader.readAsDataURL(file);
       }
     };
-
+    
     input.click();
   };
 
@@ -229,7 +234,7 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
     const task = tasks[taskIndex];
     const newCompletedTasks = new Set([...loopState.completedTasks, taskIndex]);
     onLoopStateUpdate({ completedTasks: newCompletedTasks });
-
+    
     // Notify parent component
     if (onTaskComplete) {
       onTaskComplete(task.title, 'loop');
@@ -251,16 +256,16 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
               <ArrowLeft className="w-5 h-5 mr-2" />
               <span className="hidden sm:inline">Back to Dashboard</span>
             </button>
-
+            
             <div className="flex items-center space-x-4">
-              <button
+              <button 
                 onClick={handlePrintReport}
                 className="flex items-center text-gray-600 hover:text-gray-800"
               >
                 <Printer className="w-5 h-5 mr-1" />
                 <span className="hidden sm:inline">Print Report</span>
               </button>
-              <button
+              <button 
                 onClick={() => setShowTimerSettings(true)}
                 className="flex items-center text-gray-600 hover:text-gray-800"
               >
@@ -269,27 +274,27 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
               </button>
             </div>
           </div>
-
+          
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Customer Loop #{currentLoopNumber}</h1>
           <p className="text-gray-600 mb-6">Complete every 1-1.5 hours for optimal store conditions</p>
-
+          
           {/* Timer and Progress Section */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
             <div className="text-center">
               <div className="text-3xl font-bold text-green-600 mb-1">{formatTime(loopState.elapsedTime)}</div>
               <div className="text-sm text-gray-600">Elapsed Time</div>
             </div>
-
+            
             <div className="text-center">
               <div className="text-3xl font-bold text-blue-600 mb-1">{loopState.completedTasks.size}/{tasks.length}</div>
               <div className="text-sm text-gray-600">Tasks Complete</div>
             </div>
-
+            
             <div className="text-center">
               <div className="text-3xl font-bold text-gray-900 mb-1">Progress</div>
               <div className="text-2xl font-bold text-blue-600">{progress}%</div>
             </div>
-
+            
             <div className="flex flex-col space-y-2">
               {!loopState.isRunning ? (
                 <button
@@ -308,14 +313,24 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
                   Stop
                 </button>
               )}
-
+              
               <button
                 onClick={resetLoop}
-                className="flex items-center justify-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium"
+                className="flex items-center justify-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium"
               >
                 <RotateCcw className="w-4 h-4 mr-2" />
-                Reset
+                Reset Loop
               </button>
+
+              {onResetCounter && (
+                <button
+                  onClick={onResetCounter}
+                  className="flex items-center justify-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium"
+                >
+                  <RotateCcw className="w-4 h-4 mr-2" />
+                  Reset to #1
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -327,7 +342,7 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
             <p>📸 Photos stored locally: {Object.keys(photos).length}</p>
             <p>🔑 Photo keys: {Object.keys(photos).join(', ') || 'None'}</p>
             <p>🌐 Global photos received: {Object.keys(globalPhotos).length}</p>
-            <button
+            <button 
               onClick={() => {
                 console.log('🔍 CURRENT STATE:', {
                   localPhotos: photos,
@@ -361,7 +376,7 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
                     </p>
                   </div>
                 </div>
-
+                
                 <button
                   onClick={() => handleTaskComplete(index)}
                   className={`p-2 rounded-full transition-colors ${
@@ -377,7 +392,7 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
               {/* Before & After Photos Section */}
               <div className="mb-4">
                 <p className="text-sm font-medium text-gray-700 mb-3">Before & After Photos Required</p>
-
+                
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Before Photo */}
                   <div>
@@ -390,7 +405,7 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
                         </span>
                       ) : null}
                     </div>
-
+                    
                     {photos[`${index}-before`] ? (
                       <div className="relative">
                         <img
@@ -429,7 +444,7 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
                         </span>
                       ) : null}
                     </div>
-
+                    
                     {photos[`${index}-after`] ? (
                       <div className="relative">
                         <img
@@ -469,7 +484,7 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
                   name={`notes-${index}`}
                   placeholder="Add notes about this task..."
                   value={loopState.notes[index] || ''}
-                  onChange={(e) => onLoopStateUpdate({
+                  onChange={(e) => onLoopStateUpdate({ 
                     notes: { ...loopState.notes, [index]: e.target.value }
                   })}
                   className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -510,7 +525,7 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
                   </svg>
                 </button>
               </div>
-
+              
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -529,7 +544,7 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
                     </div>
                   </div>
                 </div>
-
+                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Quick Actions
@@ -561,7 +576,7 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
                         </>
                       )}
                     </button>
-
+                    
                     <button
                       onClick={() => {
                         if (window.confirm('Are you sure you want to reset the timer? This will clear all progress.')) {
@@ -576,7 +591,7 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
                     </button>
                   </div>
                 </div>
-
+                
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Timer Info
@@ -588,7 +603,7 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
                   </div>
                 </div>
               </div>
-
+              
               <div className="mt-6 flex justify-end">
                 <button
                   onClick={() => setShowTimerSettings(false)}
@@ -604,3 +619,4 @@ export default function CustomerLoop({ onBack, onPhotosUpdate, globalPhotos = {}
     </div>
   );
 }
+
